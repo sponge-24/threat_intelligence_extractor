@@ -1,4 +1,4 @@
-# Threat Intelligence Extraction and Analysis Web Application
+# Threat Intelligence Extraction
 
 ## Problem Statement
 
