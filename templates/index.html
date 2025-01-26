@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Threat Intelligence Extractor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex">
+    <div class="container mx-auto px-4 py-8 flex space-x-4">
+        <div class="w-1/2 bg-white shadow-lg rounded-lg p-6 flex items-center justify-center">
+            <div class="text-center w-full">
+                <h1 class="text-2xl font-bold mb-6 text-gray-800">
+                    <i class="fas fa-file-pdf mr-2 text-red-500"></i>PDF Threat Intelligence Extractor
+                </h1>
+                
+                <form id="uploadForm" class="mb-6" enctype="multipart/form-data">
+                    <div class="flex items-center justify-center w-full">
+                        <label class="w-full flex flex-col items-center px-4 py-6 bg-white text-blue-500 rounded-lg shadow-lg tracking-wide uppercase border border-blue-500 cursor-pointer hover:bg-blue-500 hover:text-white">
+                            <i class="fas fa-cloud-upload-alt fa-3x"></i>
+                            <span id="fileLabel" class="mt-2 text-base leading-normal">Select a PDF file</span>
+                            <input type='file' class="hidden" accept=".pdf" id="fileInput" name="file" required>
+                        </label>
+                    </div>
+                    <p id="selectedFileName" class="text-center mt-2 text-gray-600"></p>
+                    
+                    <div class="mt-4 grid grid-cols-2 gap-2">
+                        {% for field, description in supported_fields.items() %}
+                        <div class="flex items-center">
+                            <input type="checkbox" id="{{ field }}" name="extraction_fields" value="{{ field }}" class="mr-2">
+                            <label for="{{ field }}" class="text-sm text-gray-700">{{ description }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </form>
+                
+                <button id="submitBtn" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-300 disabled:opacity-50" disabled>
+                    Extract Threat Intelligence
+                </button>
+                
+                <div id="loading" class="hidden text-center mt-4">
+                    <i class="fas fa-spinner fa-spin text-2xl text-blue-500"></i>
+                    <p class="text-gray-600">Processing PDF...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-1/2 bg-white shadow-lg rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Extracted Threat Intelligence</h2>
+            
+            <pre id="resultContent" class="bg-gray-50 p-4 rounded-lg overflow-auto max-h-96 text-sm font-mono"></pre>
+            
+            <button id="copyBtn" class="mt-4 w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition duration-300 disabled:opacity-50" disabled>
+                <i class="fas fa-copy mr-2"></i>Copy Results
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileLabel = document.getElementById('fileLabel');
+        const selectedFileName = document.getElementById('selectedFileName');
+        const submitBtn = document.getElementById('submitBtn');
+        const uploadForm = document.getElementById('uploadForm');
+        const loading = document.getElementById('loading');
+        const resultContent = document.getElementById('resultContent');
+        const copyBtn = document.getElementById('copyBtn');
+
+        // Enable submit button when a file is selected and at least one extraction field is checked
+        function updateSubmitButton() {
+            const fileSelected = fileInput.files.length > 0;
+            const fieldsChecked = Array.from(document.querySelectorAll('input[name="extraction_fields"]:checked')).length > 0;
+            submitBtn.disabled = !(fileSelected && fieldsChecked);
+        }
+
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                selectedFileName.textContent = this.files[0].name;
+                updateSubmitButton();
+            }
+        });
+
+        // Add event listeners to checkboxes
+        document.querySelectorAll('input[name="extraction_fields"]').forEach(checkbox => {
+            checkbox.addEventListener('change', updateSubmitButton);
+        });
+
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+        });
+
+        submitBtn.addEventListener('click', function() {
+            const formData = new FormData(uploadForm);
+            
+            loading.classList.remove('hidden');
+            submitBtn.disabled = true;
+            resultContent.textContent = 'Processing...';
+            copyBtn.disabled = true;
+
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.classList.add('hidden');
+                submitBtn.disabled = false;
+
+                // Check if error exists in the response
+                if (data.error) {
+                    resultContent.textContent = data.error;
+                    copyBtn.disabled = true;
+                } else {
+                    resultContent.textContent = JSON.stringify(data, null, 2);
+                    copyBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loading.classList.add('hidden');
+                submitBtn.disabled = false;
+                resultContent.textContent = 'An error occurred while processing the PDF.';
+                copyBtn.disabled = true;
+            });
+        });
+
+        copyBtn.addEventListener('click', function() {
+            navigator.clipboard.writeText(resultContent.textContent).then(() => {
+                copyBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Copied!';
+                setTimeout(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-copy mr-2"></i>Copy Results';
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

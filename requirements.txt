@@ -1,0 +1,6 @@
+pdfminer.six
+iocextract
+requests
+ollama
+python-dotenv
+flask
