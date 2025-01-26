@@ -5,7 +5,6 @@ import logging
 from dotenv import load_dotenv
 load_dotenv()
 
-# Import your custom modules
 from pdf_to_text import extract_text_from_pdf
 from extract_with_qwen import extract_entities_with_ollama
 from ioc_extract import extract_and_analyze_iocs
@@ -73,7 +72,6 @@ def upload_file():
                         if field == 'iocs':
                             results['IoCs'] = extract_and_analyze_iocs(text,  api_key=os.getenv("api_key"))
                         else:
-                            # Use the new extract_entities_with_ollama function with specific field
                             field_results = extract_entities_with_ollama(choice=field, text=text)
                             
                             # Map field names to result keys
