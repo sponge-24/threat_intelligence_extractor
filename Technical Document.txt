@@ -93,3 +93,8 @@ setup account in virustotal and enter the api key in .env file present in the pr
 
 Once all done, go inside the project folder and run the python file main.py
 and go to the link -> http://127.0.0.1:5000
+
+
+link to github -> https://github.com/sponge-24/threat_intelligence_extractor
+
+link to the demo video -> https://drive.google.com/file/d/1oe8-Zx10FIKcTl0aezWg1JE_G7DjcPq3/view?usp=sharing
